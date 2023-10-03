@@ -1,0 +1,9 @@
+# conda env create -f environment.yml
+name: cookieecutter-projects
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - cookiecutter

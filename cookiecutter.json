@@ -1,0 +1,19 @@
+{
+    "project_name": "Cookiecutter Personal",
+    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+    "project_author_name": "Your name (or your organization/company/team)",
+    "project_author_email": "Your email (or your organization/company/team)",
+    "project_description": "A short description of the project.",
+    "open_source_license": ["MIT", "BSD-3-Clause", "No license file"],
+    "project_packages": [
+        "All",
+        "Minimal"
+    ],
+    "python_version": "3.10",
+    "project_version": "1.0.0",
+    "hooks": [
+        {
+            "post_gen_project": "hooks/post_gen_project.py"
+        }
+    ]
+}
