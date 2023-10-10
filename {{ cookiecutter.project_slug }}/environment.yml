@@ -18,7 +18,7 @@ dependencies:
   - scikit-learn-intelex
   - statsmodels
   - scipy
-  - unbalanced-learn
+  - imbalanced-learn
   {% endif -%}
   - python={{ cookiecutter.python_version }}
   - pip
