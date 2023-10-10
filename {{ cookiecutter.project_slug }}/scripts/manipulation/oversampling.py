@@ -1,7 +1,7 @@
 import pandas as pd
 from imblearn.over_sampling import SMOTE
 
-def apply_smote(X, y, sampling_strategy='auto', k_neighbors=5, random_state=42):
+def oversample(X, y, sampling_strategy='auto', k_neighbors=5, random_state=42):
     """
     Apply the SMOTE (Synthetic Minority Over-sampling Technique) oversampling technique to address class imbalance.
 
