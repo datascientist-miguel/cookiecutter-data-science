@@ -1,72 +1,76 @@
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, LabelEncoder
 import pandas as pd
-"""
-    Función que transforma variables categóricas en variables numéricas.
-    Los métodos disponibles son 'onehot', 'ordinal', 'binary' y 'count'.
+
+def categorical_encoding(data, columns, method='onehot'):
     """
-    
-def categorical_encoding(data, columnas, metodo='onehot'):
+    Transform categorical variables into numerical representations using specified methods.
 
-    # Crear una copia del conjunto de datos original
-    data_transformada = data.copy()
+    Available methods:
+    - 'onehot': One-hot encoding
+    - 'ordinal': Ordinal encoding
+    - 'binary': Binary encoding
+    - 'count': Count encoding
+    - 'label': Label encoding
 
-    # Seleccionar el método de transformación
-    if metodo == 'onehot':
-        # Transformación por one-hot encoding
-        # Crear un objeto OneHotEncoder
+    Parameters:
+    data (DataFrame): Input DataFrame.
+    columns (list): List of column names to be encoded.
+    method (str): Encoding method. Default is 'onehot'.
+
+    Returns:
+    DataFrame: Transformed DataFrame.
+    """
+
+    # Create a copy of the original dataset
+    transformed_data = data.copy()
+
+    # Select the transformation method
+    if method == 'onehot':
+        # One-hot encoding
         onehot_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
 
-        # Iterar sobre las columnas seleccionadas
-        for columna in columnas:
-            # Crear un DataFrame con las variables codificadas
-            columnas_codificadas = pd.DataFrame(
-                onehot_encoder.fit_transform(data_transformada[columna].values.reshape(-1,1)),
-                columns=[columna + '_' + str(int(i)) for i in range(onehot_encoder.categories_[0].size)]
+        for column in columns:
+            encoded_columns = pd.DataFrame(
+                onehot_encoder.fit_transform(data[column].values.reshape(-1, 1)),
+                columns=[f"{column}_{val}" for val in onehot_encoder.categories_[0]]
             )
 
-            # Eliminar la columna original y concatenar la codificación one-hot
-            data_transformada = pd.concat(
-                [data_transformada.drop(columna, axis=1), columnas_codificadas], axis=1
+            transformed_data = pd.concat(
+                [transformed_data.drop(column, axis=1), encoded_columns],
+                axis=1
             )
 
-    elif metodo == 'ordinal':
-        # Transformación por label encoding ordinal
-        # Crear un objeto OrdinalEncoder
+    elif method == 'ordinal':
+        # Ordinal encoding
         ordinal_encoder = OrdinalEncoder()
 
-        # Iterar sobre las columnas seleccionadas
-        for columna in columnas:
-            # Crear una copia de la columna y transformarla
-            columna_transformada = ordinal_encoder.fit_transform(data_transformada[columna].values.reshape(-1,1))
+        for column in columns:
+            transformed_column = ordinal_encoder.fit_transform(data[column].values.reshape(-1, 1))
+            transformed_data[column] = transformed_column
 
-            # Reemplazar la columna original con la columna transformada
-            data_transformada[columna] = columna_transformada
+    elif method == 'binary':
+        # Binary encoding
+        for column in columns:
+            binary_encoded_column = pd.get_dummies(data[column], prefix=column, drop_first=False)
+            binary_encoded_column = binary_encoded_column.astype('int64')
+            transformed_data = pd.concat([transformed_data, binary_encoded_column], axis=1)
+            transformed_data = transformed_data.drop(column, axis=1)
 
-    elif metodo == 'binary':
-        # Transformación por binary encoding
-        # Iterar sobre las columnas seleccionadas
-        for columna in columnas:
-            # Crear una copia de la columna y transformarla
-            columna_transformada = pd.get_dummies(data_transformada[columna], prefix=columna, drop_first=True)
+    elif method == 'count':
+        # Count encoding
+        for column in columns:
+            frequencies = data[column].value_counts().to_dict()
+            transformed_data[column + '_count'] = data[column].map(frequencies)
+            transformed_data = transformed_data.drop(column, axis=1)
 
-            # Concatenar la columna transformada con el conjunto de datos original
-            data_transformada = pd.concat([data_transformada, columna_transformada], axis=1)
+    elif method == 'label':
+        # Label encoding
+        label_encoder = LabelEncoder()
 
-            # Eliminar la columna original
-            data_transformada = data_transformada.drop(columna, axis=1)
+        for column in columns:
+            transformed_data[column] = label_encoder.fit_transform(data[column])
 
-    elif metodo == 'count':
-        # Transformación por count encoding
-        # Iterar sobre las columnas seleccionadas
-        for columna in columnas:
-            # Crear un diccionario con la frecuencia de cada valor en la columna
-            frecuencias = data_transformada[columna].value_counts().to_dict()
+    else:
+        raise ValueError("Invalid encoding method. Valid methods are: 'onehot', 'ordinal', 'binary', 'count', 'label'.")
 
-            # Crear una nueva columna con la frecuencia de cada valor
-            data_transformada[columna+'_count'] = data_transformada[columna].map(frecuencias)
-
-            # Eliminar la columna original
-            data_transformada = data_transformada.drop(columna, axis=1)
-
-    # Retornar el conjunto de datos transformado
-    return data_transformada
+    return transformed_data

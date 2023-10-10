@@ -1,60 +1,74 @@
 import numpy as np
 from scipy.stats import boxcox, yeojohnson
 
-
-def transformar_datos(data, metodo='log', columnas_excluidas=[], valor_lambda=None):
+def transform_data(data, method='log', excluded_columns=[], lambda_value=None):
     """
-    Transforma los datos según el método seleccionado.
+    Transform the data according to the selected method.
 
-    Parámetros
+    Parameters
     ----------
     data : DataFrame
-        Los datos a transformar.
-    metodo : str, opcional (por defecto "log")
-        El método de transformación a aplicar. Las opciones son:
-        - "log": transformación logarítmica natural
-        - "sqrt": raíz cuadrada
-        - "reciprocal": recíproco
-        - "boxcox": transformación Box-Cox
-        - "yeojohnson": transformación Yeo-Johnson
-    columnas_excluidas : list, opcional (por defecto [])
-        Lista de columnas a excluir de la transformación
-    valor_lambda : float, opcional (por defecto None)
-        Valor lambda a utilizar en la transformación Box-Cox en lugar del valor obtenido automáticamente.
+        The data to transform.
+    method : str, optional (default "log")
+        The transformation method to apply. Options are:
+        - "log": natural logarithm transformation
+        - "sqrt": square root transformation
+        - "reciprocal": reciprocal transformation
+        - "boxcox": Box-Cox transformation
+        - "yeojohnson": Yeo-Johnson transformation
+    excluded_columns : list, optional (default [])
+        List of columns to exclude from transformation.
+    lambda_value : float, optional (default None)
+        Lambda value to use in Box-Cox transformation instead of automatically obtained value.
+        For Box-Cox, typical lambda values and corresponding transformations are:
+        - lambda = 0: log transformation
+        - lambda = 0.5: square root transformation
+        - lambda = 1: no transformation (identity)
+        - lambda = -1: reciprocal transformation
+        - lambda = >1: Linear transformation
 
-    Retorna
+    Returns
     -------
     DataFrame
-        Los datos transformados.
+        The transformed data.
     """
-    
-    # Crear una copia de los datos originales
-    datos_transformados = data.copy()
+    transformed_data = data.copy()
 
-    # Transformar los datos de cada columna
-    for col in datos_transformados.columns:
-        if col in columnas_excluidas:
+    valid_methods = ['log', 'sqrt', 'reciprocal', 'boxcox', 'yeojohnson']
+
+    if method not in valid_methods:
+        raise ValueError("Invalid transformation method. Choose from: 'log', 'sqrt', 'reciprocal', 'boxcox', 'yeojohnson'.")
+
+    # Iterate through columns and transform only non-binary numeric ones
+    for col in transformed_data.select_dtypes(include=[np.number]).columns:
+        if col in excluded_columns:
             continue
-        if metodo == "log":
-            datos_transformados[col] = np.log(datos_transformados[col])
-        elif metodo == "sqrt":
-            datos_transformados[col] = np.sqrt(datos_transformados[col])
-        elif metodo == "reciprocal":
-            datos_transformados[col] = np.reciprocal(datos_transformados[col])
-        elif metodo == "boxcox":
-            if np.all(datos_transformados[col] > 0):
-                if valor_lambda is not None:
-                    datos_transformados[col] = boxcox(datos_transformados[col], lmbda=valor_lambda)
+
+        # Skip binary numeric columns
+        if len(transformed_data[col].unique()) == 2:
+            print(f"Skipping transformation for binary numeric column: {col}")
+            continue
+
+        # Explicitly cast column to float before transformation
+        transformed_data[col] = transformed_data[col].astype(float)
+
+        if method == 'log':
+            transformed_data[col] = np.log(transformed_data[col])
+        elif method == 'sqrt':
+            transformed_data[col] = np.sqrt(transformed_data[col])
+        elif method == 'reciprocal':
+            transformed_data[col] = np.reciprocal(transformed_data[col])
+        elif method == 'boxcox':
+            if np.all(transformed_data[col] > 0):
+                if lambda_value is not None:
+                    transformed_data[col] = boxcox(transformed_data[col], lmbda=lambda_value)
                 else:
-                    datos_transformados[col], _ = boxcox(datos_transformados[col])
+                    transformed_data[col], _ = boxcox(transformed_data[col])
             else:
-                print(f"Advertencia: No se puede realizar la transformación Box-Cox en la columna '{col}' porque contiene valores Negativos.")
-        elif metodo == "yeojohnson":
-            valores_positivos = datos_transformados[col][datos_transformados[col] > 0]
-            valores_transformados = yeojohnson(valores_positivos)[0]
-            datos_transformados.loc[datos_transformados[col] > 0, col] = valores_transformados
-        else:
-            print('Error: Método de transformación no válido.')
-            return None
-    
-    return datos_transformados
+                print(f"Warning: Box-Cox transformation cannot be performed on column '{col}' as it contains non-positive values.")
+        elif method == 'yeojohnson':
+            positive_values = transformed_data[col][transformed_data[col] > 0]
+            transformed_values = yeojohnson(positive_values)[0]
+            transformed_data.loc[transformed_data[col] > 0, col] = transformed_values
+
+    return transformed_data

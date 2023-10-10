@@ -1,29 +1,61 @@
-import scipy.stats as stats
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-def qq_plot(data, save_fig=False, fig_name="qq-plot.png"):
+def qq_plots(df, qq_type='norm'):
+    """
+    Plots QQ plots for each numerical column in the DataFrame.
 
-    fig, axs = plt.subplots(nrows=1, ncols=data.shape[1], figsize=(15, 5))
-    fig.tight_layout(pad=3.0)
-    ref_line = np.arange(-4, 4, 0.1)
+    Parameters:
+        df (pd.DataFrame): The input DataFrame containing numerical columns.
+        qq_type (str): The type of QQ plot to generate. Options: 'norm', 'log', 'exp', 'uniform'.
 
-    for i, col in enumerate(data.columns):
-        # Calcular los cuantiles teóricos y muestrales para el gráfico QQ
-        norm = stats.norm.fit(data[col])
-        theor_quantiles = stats.norm.ppf(np.arange(0.01, 1, 0.01), *norm)
-        samp_quantiles = np.percentile(data[col], np.arange(0.01, 1, 0.01) * 100)
+    Returns:
+        None
 
-        # Graficar el gráfico QQ con línea de referencia
-        axs[i].scatter(theor_quantiles, samp_quantiles)
-        axs[i].plot(ref_line, ref_line, '--', color='gray')
+    Plots QQ plots to assess the normality of the data in each numerical column.
+    QQ plots compare the quantiles of the data with the theoretical quantiles of a specified distribution.
+
+    Usage:
+        plot_qq_plots(dataframe, qq_type='norm')
+    """
+    # Filter out only numerical columns (excluding binary numerical columns)
+    numerical_cols = [col for col in df.select_dtypes(include=[np.number]).columns if len(df[col].unique()) > 2]
+
+    num_cols = len(numerical_cols)
+    num_rows = num_cols // 5 + (num_cols % 5 > 0)
+    fig, axs = plt.subplots(nrows=num_rows, ncols=5, figsize=(20, num_rows*4))
+    axs = axs.flatten()
+
+    for i, col in enumerate(numerical_cols):
+        data = df[col]
+        # Calculate the quantiles for the data
+        quantiles_data = np.percentile(data, np.linspace(0, 100, 100))
+
+        if qq_type == 'norm':
+            # Generate theoretical quantiles from a normal distribution
+            quantiles_theoretical = np.percentile(np.random.normal(np.mean(data), np.std(data), len(data)), np.linspace(0, 100, 100))
+        elif qq_type == 'log':
+            # Generate theoretical quantiles from a log-normal distribution
+            quantiles_theoretical = np.percentile(np.random.lognormal(np.mean(data), np.std(data), len(data)), np.linspace(0, 100, 100))
+        elif qq_type == 'exp':
+            # Generate theoretical quantiles from an exponential distribution
+            quantiles_theoretical = np.percentile(np.random.exponential(np.mean(data), len(data)), np.linspace(0, 100, 100))
+        elif qq_type == 'uniform':
+            # Generate theoretical quantiles from a uniform distribution
+            quantiles_theoretical = np.percentile(np.random.uniform(np.min(data), np.max(data), len(data)), np.linspace(0, 100, 100))
+        else:
+            raise ValueError("Invalid qq_type. Supported types: 'norm', 'log', 'exp', 'uniform'.")
+
+        axs[i].plot(quantiles_theoretical, quantiles_data, 'o', color='skyblue')
+        axs[i].plot(quantiles_theoretical, quantiles_theoretical, color='k', linestyle='--')
+        axs[i].set_xlabel('Theoretical Quantiles')
+        axs[i].set_ylabel('Sample Quantiles')
         axs[i].set_title(col)
-        axs[i].set_xlabel('Cuantiles teóricos')
-        axs[i].set_ylabel('Cuantiles muestrales')
 
+    for i in range(num_cols, num_rows*5):
+        fig.delaxes(axs[i])
+
+    fig.suptitle(f'QQ Plots for Assessing {qq_type.capitalize()} Distribution', fontsize=15)
+    fig.tight_layout()
     plt.show()
-
-    # Guardar la figura en un archivo si save_fig es True
-    if save_fig:
-        fig.savefig(fig_name)

@@ -18,6 +18,7 @@ dependencies:
   - scikit-learn-intelex
   - statsmodels
   - scipy
+  - unbalanced-learn
   {% endif -%}
   - python={{ cookiecutter.python_version }}
   - pip
@@ -28,4 +29,5 @@ dependencies:
   - pip:
     - pyhere
     - numerize
+    - kaleido
 

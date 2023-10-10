@@ -21,7 +21,8 @@ cookiecutter .
 or
 
 ```bash
-cookiecutter -c https://github.com/datascientist-miguel/cookiecutter-data-science
+cookiecutter https://github.com/datascientist-miguel/cookiecutter-data-science
+```
 
 You will be asked about your project name, author, etc. This information will be used to create the project.
 
@@ -30,23 +31,25 @@ You will be asked about your project name, author, etc. This information will be
 
 ├── LICENCE
 ├── README.md
+├── environment.yml
+├── .gitignore
 ├── data
 │   ├── raw
 │   └── processed
-├── environment.yml
+├── docs
+├── models
 ├── notebooks
 │   └── 0.0-{{ cookiecutter.project_slug }}-introduction.ipynb
-├── reports
+|   └── 0.1-{{ cookiecutter.project_slug }}-eda.ipynb
+|   └── 0.2-{{ cookiecutter.project_slug }}-visualization.ipynb
+|   └── 0.3-{{ cookiecutter.project_slug }}-modeling.ipynb
+├── report
 ├── scripts
-├── setup.py
-└── {{ cookiecutter.project_slug }}_packages
-    ├── __init__.py
-    ├── utils
-    │   ├── __init__.py
-    │   └── get_path.py
-    └── visualization
-        ├── __init__.py
-        └── visualization.py
+│   ├── analysis
+│   ├── manipulation
+│   ├── modeling
+│   ├── visualization
+
 
 ## Credits
 

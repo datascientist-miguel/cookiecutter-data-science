@@ -6,72 +6,114 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def pca_lda_analysis(data, n_components=None, excluded_cols=None, method='pca'):
+def pca_lda_analysis(data, n_components=None, excluded_cols=None, method='pca', target_column=None):
+    """
+    Perform PCA or LDA analysis on the input dataset and visualize the results.
+
+    Parameters:
+    data (DataFrame): Input DataFrame.
+    n_components (int): Number of components for PCA. Default is None.
+    excluded_cols (list): List of columns to exclude. Default is None.
+    method (str): Analysis method. Options: 'pca', 'lda'. Default is 'pca'.
+    target_column (str): Name of the target column for LDA. Default is None.
+
+    Returns:
+    DataFrame or tuple: Transformed DataFrame (for PCA) or tuple of components and weights (for LDA).
+
+    Raises:
+    ValueError: If the specified method is invalid.
+    """
+
+    # Check if excluded columns are provided
     if excluded_cols is None:
         excluded_cols = []
-    # Realizar PCA o LDA
-    if method == 'pca':
-        pca = PCA(n_components=n_components)
-        pca.fit(data.drop(excluded_cols, axis=1))
 
-        # Obtener las componentes principales
-        components = pca.transform(data.drop(excluded_cols, axis=1))
+    # Handle PCA or LDA based on the chosen method
+    if method == 'pca':
+        # Filter out non-numeric columns
+        numeric_cols = data.select_dtypes(include=[np.number]).columns
+        data_numeric = data[numeric_cols]
+
+        pca = PCA(n_components=n_components)
+        pca.fit(data_numeric.drop(excluded_cols, axis=1))
+
+        # Get the principal components
+        components = pca.transform(data_numeric.drop(excluded_cols, axis=1))
         
-        # Obtener el porcentaje de varianza explicada
+        # Get the explained variance ratio
         explained_var = pca.explained_variance_ratio_
-        
-        # Crear un DataFrame a partir de los componentes principales
+
+        # Create a DataFrame from the principal components
         components_df = pd.DataFrame(components, columns=[f"PC{i+1}" for i in range(len(explained_var))])
 
-        # Graficar la proporción de varianza explicada por cada componente principal
+        # Visualize the proportion of variance explained by each principal component
         plt.figure(figsize=(8, 6))
         sns.barplot(x=[f"PC{i+1}" for i in range(len(explained_var))], y=explained_var)
-        plt.title("Proporción de varianza explicada por cada componente principal")
-        plt.xlabel("Componente principal")
-        plt.ylabel("Proporción de varianza explicada")
+        plt.title("Proportion of Variance Explained by Each Principal Component")
+        plt.xlabel("Principal Component")
+        plt.ylabel("Proportion of Variance Explained")
+        plt.show()
 
-        # Obtener los pesos de las variables para la primera componente principal
+        # Get the weights of the variables for the first principal component
         weights = pca.components_[0]
 
-        # Obtener los nombres de las variables originales del DataFrame
-        variable_names_pca = data.drop(excluded_cols, axis=1).columns.tolist()
+        # Get the names of the original variables from the DataFrame
+        variable_names_pca = data_numeric.drop(excluded_cols, axis=1).columns.tolist()
 
-        # Graficar los pesos de las variables
+        # Visualize the weights of the variables
         plt.figure(figsize=(8, 6))
         sns.barplot(x=variable_names_pca, y=weights)
-        plt.title("Pesos de las variables en el primera componente principal (PCA)")
+        plt.title("Variable Weights in the First Principal Component (PCA)")
         plt.xlabel("Variable")
-        plt.ylabel("Peso")
-        # Rotar los nombres de las variables en el eje X en 90 grados
+        plt.ylabel("Weight")
         plt.xticks(rotation=90)
+        plt.show()
 
-        # Retornar las componentes principales, el porcentaje de varianza explicada y los pesos de las variables
         return components_df
-    
-    
+
     elif method == 'lda':
+        if target_column is None:
+            raise ValueError("For LDA, a target column must be specified using the 'target_column' parameter.")
+
+        # Filter out non-numeric columns
+        numeric_cols = data.select_dtypes(include=[np.number]).columns
+        data_numeric = data[numeric_cols]
+
         lda = LinearDiscriminantAnalysis()
-        lda.fit(data.drop(excluded_cols, axis=1), data.iloc[:, -1])
+        lda.fit(data_numeric.drop(excluded_cols, axis=1), data[target_column])
 
-        # Obtener la primera componente discriminante
-        lda_components = lda.transform(data.drop(excluded_cols, axis=1))
+        # Get the first discriminant component
+        lda_components = lda.transform(data_numeric.drop(excluded_cols, axis=1))
 
-        # Obtener los pesos de las variables para la primera componente discriminante
+        # Get the weights of the variables for the first discriminant component
         weights_lda = lda.coef_[0]
+        
+        # Get the names of the original variables from the DataFrame
+        variable_names_lda = data_numeric.drop(excluded_cols, axis=1).columns.tolist()
+        
+        # Get explained variance ratio, means, and priors
+        explained_variance = lda.explained_variance_ratio_
+        class_means = lda.means_
+        priors = lda.priors_
+        
+        # Visualize the proportion of variance explained by each component
+        plt.figure(figsize=(8, 6))
+        sns.barplot(x=[f"Component {i+1}" for i in range(len(explained_variance))], y=explained_variance)
+        plt.title("Proportion of Variance Explained by Each Component (LDA)")
+        plt.xlabel("Component")
+        plt.ylabel("Proportion of Variance Explained")
+        plt.show()
 
-        # Obtener los nombres de las variables originales del DataFrame
-        variable_names_lda = data.drop(excluded_cols, axis=1).columns.tolist()
-
-        # Graficar los pesos de las variables
+        # Visualize the weights of the variables
         plt.figure(figsize=(8, 6))
         sns.barplot(x=variable_names_lda, y=weights_lda)
-        plt.title("Pesos de las variables en el primera componente discriminante (LDA)")
+        plt.title("Variable Weights in the First Discriminant Component (LDA)")
         plt.xlabel("Variable")
-        plt.ylabel("Peso")
-        # Rotar los nombres de las variables en el eje X en 90 grados
+        plt.ylabel("Weight")
         plt.xticks(rotation=90)
+        plt.show()
 
-        # Retornar las componentes discriminantes y los pesos de las variables
-        return lda_components, weights_lda
+        return lda_components, weights_lda, explained_variance, class_means, priors
+
     else:
-        raise ValueError("El método especificado no es válido. Los métodos válidos son 'pca' o 'lda'.")
+        raise ValueError("Invalid analysis method. Valid methods are: 'pca' or 'lda'.")
