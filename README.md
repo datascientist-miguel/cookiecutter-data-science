@@ -29,6 +29,8 @@ You will be asked about your project name, author, etc. This information will be
 
 ## Estructure of the project
 
+```bash
+{{ cookiecutter.project_slug }}
 ├── LICENCE
 ├── README.md
 ├── environment.yml
@@ -49,6 +51,7 @@ You will be asked about your project name, author, etc. This information will be
 │   ├── manipulation
 │   ├── modeling
 │   ├── visualization
+```
 
 
 ## Credits

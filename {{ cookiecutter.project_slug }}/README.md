@@ -35,7 +35,7 @@ conda activate {{ cookiecutter.project_slug }}
 
 
 ## Project organization
-
+```bash
 {{ cookiecutter.project_slug }}
 ├── LICENCE
 ├── README.md
@@ -57,3 +57,4 @@ conda activate {{ cookiecutter.project_slug }}
 │   ├── manipulation
 │   ├── modeling
 │   ├── visualization
+```
