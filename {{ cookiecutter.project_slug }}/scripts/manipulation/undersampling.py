@@ -1,17 +1,17 @@
-import pandas as pd
-
 def undersample(data, target):
     """
     This function undersamples the majority class.
     """
-    # Calculate the minority class
-    minority_class = min(data[target].value_counts())
-    # Calculate the majority class
-    majority_class = max(data[target].value_counts())
+    # Calculate the class distribution
+    class_counts = data[target].value_counts()
+    
+    # Find the minority and majority class
+    minority_class = class_counts.idxmin()
+    majority_class = class_counts.idxmax()
     
     # Separate majority and minority classes
-    df_majority = data[data[target]==majority_class]
-    df_minority = data[data[target]==minority_class]
+    df_majority = data[data[target] == majority_class]
+    df_minority = data[data[target] == minority_class]
     
     # Undersample majority class
     df_majority_downsampled = df_majority.sample(n=len(df_minority), random_state=1)
