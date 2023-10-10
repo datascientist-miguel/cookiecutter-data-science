@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
+import seaborn as sns
 def boxplot(data, hue):
     """
     This function is used to plot boxplots for numerical variables
