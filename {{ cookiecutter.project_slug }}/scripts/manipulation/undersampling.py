@@ -1,3 +1,4 @@
+import pandas as pd
 def undersample(data, target):
     """
     This function undersamples the majority class.
